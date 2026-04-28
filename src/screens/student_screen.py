@@ -94,7 +94,9 @@ def student_screen():
     st.header("Login Using Face", text_alignment='center')
     st.space()
 
-    show_registration = False
+    # show_registration = False
+    if 'show_registration' not in st.session_state:
+        st.session_state.show_registration = False
     photo_source = st.camera_input("Position your face in the center")
     if photo_source:
         img = np.array(Image.open(photo_source))
@@ -118,9 +120,9 @@ def student_screen():
                         st.rerun()
                 else:
                     st.info('Face not recognised! You might be a new student')
-                    show_registration = True
+                    st.session_state.show_registration = True
 
-    if show_registration:
+    if st.session_state.show_registration:
         with st.container(border=True):
             st.header('Register new profile')
             new_name = st.text_input("Enter your name: ", placeholder='E.g. John')
