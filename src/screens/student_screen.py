@@ -130,7 +130,8 @@ def student_screen():
                         st.rerun()
                 else:
                     st.info('Face not recognised! You might be a new student')
-                    st.session_state.show_registration = True  # 👈
+                    st.session_state.show_registration = True
+                    st.rerun()  # 👈
 
     if st.session_state.show_registration:
         with st.container(border=True):
