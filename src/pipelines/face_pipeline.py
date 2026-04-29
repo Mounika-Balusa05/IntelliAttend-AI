@@ -78,12 +78,12 @@ def predict_attendance(class_image_np):
             idx = y_train.index(predicted_id)
             student_embedding = X_train[idx]
             best_match_score = np.linalg.norm(student_embedding - encoding)
-            if best_match_score <= 0.5:  # 👈 changed from 0.6
+            if best_match_score <= 0.6:  # 👈 changed from 0.6
                 detected_student[predicted_id] = True
         else:
             student_embedding = X_train[0]
             distance = np.linalg.norm(student_embedding - encoding)
-            if distance <= 0.5:  # 👈 changed from 0.5
+            if distance <= 0.6:  # 👈 changed from 0.5
                 predicted_id = int(all_students[0])
                 detected_student[predicted_id] = True
 
