@@ -63,6 +63,11 @@ def predict_attendance(class_image_np):
     detected_student = {}
     model_data = get_trained_model()
 
+    st.write(f"Debug: encodings found = {len(encodings)}")  # 👈
+    st.write(f"Debug: model loaded = {model_data is not None}")  # 👈
+    if model_data:
+        st.write(f"Debug: students in model = {model_data['y']}")  # 👈
+
     if not model_data:
         return detected_student, [], len(encodings)
 
