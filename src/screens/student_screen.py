@@ -22,6 +22,8 @@ def student_dashboard():
         if st.button("Logout", type='secondary', key='logoutbtn'):
             st.session_state['is_logged_in'] = False
             del st.session_state.student_data
+            st.session_state.show_registration = False  # 👈 reset
+            st.session_state.photo_source = None  # 👈 reset
             st.rerun()
 
     st.header(f"Welcome, {student_data['name']}")
@@ -32,7 +34,7 @@ def student_dashboard():
         st.header('Your Enrolled Subjects')
     with c2:
         if st.button('Enroll in Subject', type='primary', width='stretch'):
-            enroll_dialog(student_id)  # 👈 pass student_id
+            enroll_dialog(student_id)
 
     st.divider()
 
@@ -46,7 +48,7 @@ def student_dashboard():
         if sid not in stats_map:
             stats_map[sid] = {"total": 0, "attended": 0}
         stats_map[sid]['total'] += 1
-        if log.get('is_present'):  # 👈 fixed logs → log
+        if log.get('is_present'):
             stats_map[sid]['attended'] += 1
 
     cols = st.columns(2)
@@ -55,11 +57,10 @@ def student_dashboard():
         sid = sub['subject_id']
         stats = stats_map.get(sid, {"total": 0, "attended": 0})
 
-        def unenroll_button(sid=sid):  # 👈 capture sid in default arg
-            if st.button('Unenroll from this course', type='tertiary', icon=':material/delete_forever:',width='stretch', key=f"unenroll_{sid}"):
+        def unenroll_button(sid=sid):
+            if st.button('Unenroll from this course', type='tertiary', icon=':material/delete_forever:', width='stretch', key=f"unenroll_{sid}"):
                 unenroll_student_to_subject(student_id, sid)
-                st.rerun()  # 👈 added
-                st.toast(f"Unenrolled from {sub[name]} sucessfully!")
+                st.toast(f"Unenrolled successfully!")
                 st.rerun()
 
         with cols[i % 2]:
@@ -89,23 +90,31 @@ def student_screen():
     with c2:
         if st.button("Go back to home", type='secondary', key='loginbackbtn'):
             st.session_state['login_type'] = None
+            st.session_state.show_registration = False  # 👈 reset
+            st.session_state.photo_source = None  # 👈 reset
             st.rerun()
 
     st.header("Login Using Face", text_alignment='center')
     st.space()
 
-    # show_registration = False
     if 'show_registration' not in st.session_state:
         st.session_state.show_registration = False
+
+    if 'photo_source' not in st.session_state:  # 👈 initialize
+        st.session_state.photo_source = None
+
     photo_source = st.camera_input("Position your face in the center")
     if photo_source:
+        st.session_state.photo_source = photo_source  # 👈 save photo
         img = np.array(Image.open(photo_source))
         with st.spinner('AI is scanning...'):
             detected, all_ids, num_faces = predict_attendance(img)
             if num_faces == 0:
                 st.warning('Face not found!!!')
+                st.session_state.show_registration = False  # 👈 reset
             elif num_faces > 1:
                 st.warning('Multiple faces found!!!')
+                st.session_state.show_registration = False  # 👈 reset
             else:
                 if detected:
                     student_id = list(detected.keys())[0]
@@ -115,12 +124,13 @@ def student_screen():
                         st.session_state.is_logged_in = True
                         st.session_state.user_role = 'student'
                         st.session_state.student_data = student
+                        st.session_state.show_registration = False  # 👈 reset
                         st.toast(f"Welcome Back {student['name']}!")
                         time.sleep(1)
                         st.rerun()
                 else:
                     st.info('Face not recognised! You might be a new student')
-                    st.session_state.show_registration = True
+                    st.session_state.show_registration = True  # 👈
 
     if st.session_state.show_registration:
         with st.container(border=True):
@@ -136,7 +146,7 @@ def student_screen():
             if st.button('Create Account', type='primary'):
                 if new_name:
                     with st.spinner('Creating profile...'):
-                        img = np.array(Image.open(photo_source))
+                        img = np.array(Image.open(st.session_state.photo_source))  # 👈 use saved photo
                         encodings = get_face_embeddings(img)
                         if encodings:
                             face_emb = encodings[0].tolist()
@@ -149,6 +159,8 @@ def student_screen():
                                 st.session_state.is_logged_in = True
                                 st.session_state.user_role = 'student'
                                 st.session_state.student_data = response_data[0]
+                                st.session_state.show_registration = False  # 👈 reset
+                                st.session_state.photo_source = None  # 👈 reset
                                 st.toast(f'Profile Created {new_name}!')
                                 time.sleep(1)
                                 st.rerun()
