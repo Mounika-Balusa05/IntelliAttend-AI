@@ -35,6 +35,9 @@ def get_trained_model():
     X = []
     y = []
     student_db = get_all_students()
+    
+    st.write(f"Debug DB: students found = {len(student_db) if student_db else 0}")  # 👈
+    
     if not student_db:
         return None
     for student in student_db:
@@ -42,13 +45,17 @@ def get_trained_model():
         if embedding:
             X.append(np.array(embedding))
             y.append(student.get('student_id'))
+    
+    st.write(f"Debug: embeddings loaded = {len(X)}")  # 👈
+    
     if len(X) == 0:
         return None
     clf = SVC(kernel='linear', probability=True, class_weight='balanced')
     try:
-        clf.fit(X, y)  # ✅ fixed fiy → fit
-        return {'clf': clf, 'X': X, 'y': y}  # ✅ moved inside try
-    except ValueError:
+        clf.fit(X, y)
+        return {'clf': clf, 'X': X, 'y': y}
+    except ValueError as e:
+        st.write(f"Debug: error = {e}")  # 👈
         return None
 
 
