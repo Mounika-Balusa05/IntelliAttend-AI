@@ -103,9 +103,11 @@ def student_screen():
     if 'photo_source' not in st.session_state:  # 👈 initialize
         st.session_state.photo_source = None
 
-    photo_source = st.camera_input("Position your face in the center")
-    if photo_source:
-        st.session_state.photo_source = photo_source  # 👈 save photo
+    photo_source = st.camera_input("Position your face in the center", key="camera")
+
+    if st.session_state.get("camera") is not None:
+        photo_source = st.session_state.camera
+        st.session_state.photo_source = photo_source
         img = np.array(Image.open(photo_source))
         with st.spinner('AI is scanning...'):
             detected, all_ids, num_faces = predict_attendance(img)
