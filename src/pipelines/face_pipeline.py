@@ -26,7 +26,7 @@ def get_face_embeddings(image_np):
     for face in faces:
         shape = sp(image_np, face)
         face_descriptor = facerec.compute_face_descriptor(image_np, shape, 1)
-        encodings.append(np.array(face_descriptor))  # ✅ fixed
+        encodings.append(np.array(face_descriptor))
     return encodings
 
 
@@ -35,9 +35,6 @@ def get_trained_model():
     X = []
     y = []
     student_db = get_all_students()
-    
-    st.write(f"Debug DB: students found = {len(student_db) if student_db else 0}")  # 👈
-    
     if not student_db:
         return None
     for student in student_db:
@@ -45,22 +42,23 @@ def get_trained_model():
         if embedding:
             X.append(np.array(embedding))
             y.append(student.get('student_id'))
-    
-    st.write(f"Debug: embeddings loaded = {len(X)}")  # 👈
-    
     if len(X) == 0:
         return None
+
+    # 👈 single student — skip SVC, use distance only
+    if len(X) == 1:
+        return {'clf': None, 'X': X, 'y': y}
+
     clf = SVC(kernel='linear', probability=True, class_weight='balanced')
     try:
         clf.fit(X, y)
         return {'clf': clf, 'X': X, 'y': y}
-    except ValueError as e:
-        st.write(f"Debug: error = {e}")  # 👈
+    except ValueError:
         return None
 
 
 def train_classifier():
-    st.cache_resource.clear()
+    get_trained_model.clear()
     model_data = get_trained_model()
     return bool(model_data)
 
@@ -69,11 +67,6 @@ def predict_attendance(class_image_np):
     encodings = get_face_embeddings(class_image_np)
     detected_student = {}
     model_data = get_trained_model()
-
-    st.write(f"Debug: encodings found = {len(encodings)}")  # 👈
-    st.write(f"Debug: model loaded = {model_data is not None}")  # 👈
-    if model_data:
-        st.write(f"Debug: students in model = {model_data['y']}")  # 👈
 
     if not model_data:
         return detected_student, [], len(encodings)
@@ -85,17 +78,18 @@ def predict_attendance(class_image_np):
     all_students = sorted(list(set(y_train)))
 
     for encoding in encodings:
-        if len(all_students) >= 2:
+        if clf is not None and len(all_students) >= 2:
             predicted_id = int(clf.predict([encoding])[0])
             idx = y_train.index(predicted_id)
             student_embedding = X_train[idx]
             best_match_score = np.linalg.norm(student_embedding - encoding)
-            if best_match_score <= 0.6:  # 👈 changed from 0.6
+            if best_match_score <= 0.6:
                 detected_student[predicted_id] = True
         else:
+            # single student — use distance check only
             student_embedding = X_train[0]
             distance = np.linalg.norm(student_embedding - encoding)
-            if distance <= 0.6:  # 👈 changed from 0.5
+            if distance <= 0.6:
                 predicted_id = int(all_students[0])
                 detected_student[predicted_id] = True
 
