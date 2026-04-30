@@ -1,4 +1,5 @@
 ﻿# IntelliAttend AI
 
-link : https://intelliattend-ai-main.streamlit.app/
+## Link of the Project
+ https://ia-landing-page.vercel.app/
 
